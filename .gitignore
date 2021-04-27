@@ -1,0 +1,10 @@
+*.root
+*.txt
+*.pdf
+*.pyc
+*.xml
+*.sh
+*.pickle
+*.C
+/__pycache__
+/venv
