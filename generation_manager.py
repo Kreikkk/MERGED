@@ -73,10 +73,14 @@ def TMVA_gen(params, methodname, uploadfile):
 	dataloader.AddVariable("deltaYJPh","F")
 	dataloader.AddSpectator("weightModified", "F")
 
-	dataloader.SetSignalWeightExpression("weightModified")
-	dataloader.SetBackgroundWeightExpression("weightModified")
+	if USE_W:
+		dataloader.SetSignalWeightExpression("weightModified")
+		dataloader.SetBackgroundWeightExpression("weightModified")
 
-	cut = root.TCut("(nJets > 1)&&(nLeptons == 0)")
+	if DROP_NEGATIVE_W:
+		cut = root.TCut("(nJets > 1)&&(nLeptons == 0)&&(weightModified > 0)")
+	else:
+		cut = root.TCut("(nJets > 1)&&(nLeptons == 0)")
 
 	dataloader.PrepareTrainingAndTestTree(cut, ":".join(["nTrain_Signal=0",
 														 "nTrain_Background=0",
@@ -117,6 +121,11 @@ def TMVA_gen(params, methodname, uploadfile):
 
 def SKL_gen(params, methodname, uploadfile):
 	TrainDF, _ = dataset_gen(datatype=0)
+	if DROP_NEGATIVE_W:
+		TrainDF = TrainDF[TrainDF["weightModified"] > 0]
+
+	print((TrainDF["weightModified"] < 0).any())
+	
 	train_data = np.array(TrainDF.iloc[:,:11], dtype="float64")
 	labels = np.array(TrainDF.iloc[:,14], dtype="float64")
 	sample_weight = np.array(TrainDF.iloc[:,12], dtype="float64")
@@ -142,9 +151,13 @@ def SKL_gen(params, methodname, uploadfile):
 
 	t = time.time()
 	if methodname == "SKL_BDT":
-		classifier.fit(train_data, labels, sample_weight=sample_weight)
+		if USE_W:
+			classifier.fit(train_data, labels, sample_weight=sample_weight)
+		else:
+			classifier.fit(train_data, labels)
 	else:
 		classifier.fit(train_data, labels)
+
 	dump(methodname, uploadfile, "time:"+str(round(time.time() - t))+"\n")
 
 	with open(f"models/{methodname}/{uploadfile}.pickle", "wb") as file:

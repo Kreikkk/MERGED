@@ -1,6 +1,6 @@
 *.root
 *.txt
-*.pdf
+# *.pdf
 *.pyc
 *.xml
 *.sh

@@ -79,3 +79,15 @@ def dump(methodname, uploadfile, data):
 def clear(methodname, uploadfile):
 	with open(f"results/data/{methodname}/{uploadfile}.txt", "w") as _:
 		pass
+
+
+def get_min_max_response_value(dataframes):
+	minimums, maximums = [], []
+	for dataframe in dataframes:
+		minimum = dataframe["response"].min()
+		maximum = dataframe["response"].max()
+
+		minimums.append(minimum)
+		maximums.append(maximum)
+
+	return min(minimums), max(maximums)

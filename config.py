@@ -9,3 +9,6 @@ TREENAME = "TMVA_input"
 BDTSTEP = 0.005
 
 PARAMETERS = ["!V", "!Silent", "Color", "DrawProgressBar", "AnalysisType=Classification"]
+
+DROP_NEGATIVE_W = True
+USE_W = True
