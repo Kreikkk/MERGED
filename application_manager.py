@@ -29,6 +29,14 @@ def main():
 		STestDataframe, BTestDataframe 	 	= SKL_reader(TestDataframe, methodname, uploadfile)
 		SDataframe, BDataframe 			 	= SKL_reader(Dataframe, methodname, uploadfile)
 
+	elif methodname == "XGB":
+		TrainDataframe, TestDataframe		= dataset_gen(datatype=0)
+		Dataframe							= extract(datatype=1)
+
+		STrainDataframe, BTrainDataframe 	= XGB_reader(TrainDataframe, methodname, uploadfile)
+		STestDataframe, BTestDataframe 	 	= XGB_reader(TestDataframe, methodname, uploadfile)
+		SDataframe, BDataframe 			 	= XGB_reader(Dataframe, methodname, uploadfile)
+
 	else:
 		raise ValueError(f"No method: {methodname}")
 
@@ -99,6 +107,17 @@ def SKL_reader(dataframe, methodname, uploadfile):
 
 	return SDataframe, BDataframe
 
+
+def XGB_reader(dataframe, methodname, uploadfile):
+	with open(f"models/{methodname}/{uploadfile}.pickle", "rb") as file:
+		reader = pickle.load(file)
+
+	response = reader.predict_proba(dataframe.values[:,:11])[:,0]
+	dataframe.loc[:,"response"] = response
+
+	SDataframe, BDataframe = dataframe[dataframe["classID"] == 0], dataframe[dataframe["classID"] == 1]
+
+	return SDataframe, BDataframe
 
 if __name__ == "__main__":
 	setup()

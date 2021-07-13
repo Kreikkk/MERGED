@@ -6,6 +6,7 @@ import pickle
 
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.neural_network import MLPClassifier
+from xgboost import XGBClassifier
 from dataloader import dataset_gen
 from sys import argv
 from helpers import dump, clear
@@ -23,6 +24,9 @@ def main():
 
 	elif methodname in ("SKL_BDT", "SKL_MLP"):
 		SKL_gen(params, methodname, uploadfile)
+
+	elif methodname == "XGB":
+		XGB_gen(params, methodname, uploadfile)
 
 	else:
 		raise ValueError(f"No method: {methodname}")
@@ -92,12 +96,13 @@ def TMVA_gen(params, methodname, uploadfile):
 	model = root.TMVA.Types.kBDT if methodname == "TMVA_BDT" else root.TMVA.Types.kMLP
 
 	if methodname == "TMVA_MLP":
-		settings = ["!H", "!V", "VarTransform=G", "NCycles=400", "BPMode=batch",
+		settings = ["!H", "!V", "VarTransform=N", "NCycles=400", "BPMode=batch",
 					"TestRate=5", "!UseRegulator", "NeuronType=sigmoid",
 					"ConvergenceImprove=0.0025", "ConvergenceTests=5",
-					f"LearningRate={params[0]}",
-					f"HiddenLayers={params[1]}",
-					f"BatchSize={params[2]}",]
+					f"TrainingMethod={params[0]}",
+					f"LearningRate={params[1]}",
+					f"BatchSize={params[2]}",
+					f"HiddenLayers={params[3]}",]
 	
 	elif methodname == "TMVA_BDT":
 		settings = ["!H", "!V", "MinNodeSize=5", "BoostType=Grad",
@@ -157,6 +162,31 @@ def SKL_gen(params, methodname, uploadfile):
 			classifier.fit(train_data, labels)
 	else:
 		classifier.fit(train_data, labels)
+
+	dump(methodname, uploadfile, "time:"+str(round(time.time() - t))+"\n")
+
+	with open(f"models/{methodname}/{uploadfile}.pickle", "wb") as file:
+		pickle.dump(classifier, file)
+
+
+def XGB_gen(params, methodname, uploadfile):
+	TrainDF, _ = dataset_gen(datatype=0)
+	if DROP_NEGATIVE_W:
+		TrainDF = TrainDF[TrainDF["weightModified"] > 0]
+	
+	train_data = np.array(TrainDF.iloc[:,:11], dtype="float64")
+	labels = np.array(TrainDF.iloc[:,14], dtype="float64")
+	sample_weight = np.array(TrainDF.iloc[:,12], dtype="float64")
+
+	classifier = XGBClassifier(n_estimators=int(params[0]),
+							   max_depth=int(params[1]),
+							   learning_rate=float(params[2]),
+							   verbosity=1)
+	t = time.time()
+	if USE_W:
+		classifier.fit(train_data, labels, sample_weight=sample_weight)
+	else:
+			classifier.fit(train_data, labels)
 
 	dump(methodname, uploadfile, "time:"+str(round(time.time() - t))+"\n")
 

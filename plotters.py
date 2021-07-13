@@ -246,7 +246,7 @@ def output_hist_plot(STestDataframe, BTestDataframe,
 	ax2.set_ylabel("Train/Test")
 	ax3.set_ylabel("Train/Test")
 
-	line = root.TLine(left, right, 1, 1)
+	line = root.TLine(left, 1, right, 1)
 
 	ax2.plot(line)
 	ax3.plot(line)
